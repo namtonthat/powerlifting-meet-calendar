@@ -1,0 +1,21 @@
+[project]
+name = "powerlifting-meet-calendar"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "icalendar>=7.3.0",
+    "requests>=2.34.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.17.2",
+]
+
+[tool.ruff]
+line-length = 200
+
+[tool.ruff.lint]
+select = ["E", "F", "G", "I", "PT", "PTH", "RUF", "SIM", "T20"]
+ignore = ["E501", "G004"]

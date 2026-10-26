@@ -1,0 +1,52 @@
+name: Publish feeds
+
+on:
+  schedule:
+    - cron: "17 18 * * *"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Test
+        run: uv run pytest -q
+
+      - name: Build feeds
+        run: uv run python build_feeds.py
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      # Public-repo crons pause after 60 days without commits; re-enabling resets that clock.
+      - name: Keep schedule alive
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/publish.yml/enable"
+        env:
+          GH_TOKEN: ${{ github.token }}
