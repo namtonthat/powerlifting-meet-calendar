@@ -26,7 +26,7 @@ The event title starts with a status when the meet's sign-up page reveals one:
 |---|---|
 | APA (Revolutionise) | `OPEN · cap N`, `SOLD OUT`, `CLOSED`, `CANCELLED` |
 | JotForm (most USAPL meets) | `OPEN · cap N` (cap from "LIMITED TO N"), `SOLD OUT`, `CLOSED` |
-| LiftingCast | `N entered` (the cap isn't public) |
+| LiftingCast | `N entered` for about the nearest 100 meets (its rate limit); the cap isn't public |
 | Any source | `SOLD OUT` or `CANCELLED` when the meet title says so |
 
 Not covered yet: uspa.net, wrpf.pro, ironpodium.com, aplpowerlifting.com, JustGo (Powerlifting Australia) and StrengthHub (FEMEPO) sign-up pages.

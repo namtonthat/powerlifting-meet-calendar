@@ -21,8 +21,9 @@ OUT = Path("public")
 SESSION = requests.Session()
 SESSION.headers["User-Agent"] = "powerlifting-meet-calendar (+https://github.com/namtonthat/powerlifting-meet-calendar)"
 SESSION.mount("https://", HTTPAdapter(max_retries=Retry(total=3, backoff_factor=2, status_forcelist=(502, 503, 504))))
-# LiftingCast 429s after about 100 quick requests and stays blocked for a long while, so pace it instead of retrying.
+# LiftingCast allows about 100 meet lookups, then 429s for a long while; pace it and stop at the first 429.
 LIFTINGCAST_PAUSE = 3
+liftingcast_blocked = False
 
 # ponytail: Russia/Belarus left out on purpose; add them here if wanted
 EUROPE = {
@@ -159,6 +160,7 @@ def liftingcast_status(docs: list[dict]) -> str:
 
 
 def status(meet: Meet) -> str | None:
+    global liftingcast_blocked
     if flagged := flag(meet.name):
         return flagged
     url = meet.link.split("?")[0]
@@ -168,12 +170,13 @@ def status(meet: Meet) -> str | None:
             return apa_status(get(url).text)
         if host.endswith("jotform.com"):
             return jotform_status(get(url).text)
-        # ponytail: LiftingCast only for meets in the next 90 days to stay under its limit; widen if the 429s stop
-        soon = meet.start <= date.today() + timedelta(days=90)
-        if host.endswith("liftingcast.com") and soon and (m := re.search(r"/meets/([a-z0-9]+)", url)):
+        # Meets arrive soonest first, so the lookups LiftingCast allows go to the nearest meets.
+        if host.endswith("liftingcast.com") and not liftingcast_blocked and (m := re.search(r"/meets/([a-z0-9]+)", url)):
             time.sleep(LIFTINGCAST_PAUSE)
             return liftingcast_status(get(f"https://liftingcast.com/api/meets/{m[1]}").json()["docs"])
     except requests.RequestException as err:
+        if host.endswith("liftingcast.com") and err.response is not None and err.response.status_code == 429:
+            liftingcast_blocked = True
         log.warning("status lookup failed for %s: %s", url, err)
     return None
 
